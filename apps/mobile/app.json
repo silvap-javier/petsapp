@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "PetsApp",
+    "slug": "petsapp",
+    "version": "0.1.0",
+    "scheme": "petsapp",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "web": {
+      "bundler": "webpack"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "replace-with-eas-project-id"
+      },
+      "apiUrl": "http://localhost:3000"
+    }
+  }
+}

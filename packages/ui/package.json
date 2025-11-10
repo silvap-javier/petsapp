@@ -1,0 +1,11 @@
+{
+  "name": "@pets/ui",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "private": true,
+  "dependencies": {
+    "react": "*",
+    "react-native": "*",
+    "react-native-paper": "^5.12.5"
+  }
+}

@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  GUARDIAN
+  SITTER
+  ORGANIZATION_OWNER
+}
+
+enum PetGuardianRole {
+  PRIMARY_OWNER
+  CO_OWNER
+  CARETAKER
+}
+
+enum CaretakerStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+}
+
+enum OrganizationMemberRole {
+  OWNER
+  MEMBER
+  VOLUNTEER
+}
+
+enum OrganizationPetStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+model User {
+  id           String              @id @default(uuid())
+  email        String              @unique
+  passwordHash String
+  name         String
+  role         UserRole            @default(GUARDIAN)
+  petsOwned    Pet[]               @relation("PrimaryOwner")
+  guardianPets PetGuardian[]
+  caretakerOf  PetCaretaker[]
+  memberships  OrganizationMember[]
+  organizations Organization[]     @relation("OrganizationOwner")
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model Pet {
+  id               String               @id @default(uuid())
+  name             String
+  species          String?
+  description      String?
+  type             String?
+  breed            String?
+  color            String?
+  weightKg         Float?
+  primaryOwnerId   String?
+  primaryOwner     User?                @relation("PrimaryOwner", fields: [primaryOwnerId], references: [id])
+  guardians        PetGuardian[]
+  caretakers       PetCaretaker[]
+  organizationLinks OrganizationPet[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@index([primaryOwnerId])
+}
+
+model PetGuardian {
+  id        String           @id @default(uuid())
+  petId     String
+  userId    String
+  role      PetGuardianRole  @default(CO_OWNER)
+  isActive  Boolean          @default(true)
+  pet       Pet              @relation(fields: [petId], references: [id])
+  user      User             @relation(fields: [userId], references: [id])
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([petId, userId, role])
+  @@index([userId])
+}
+
+model PetCaretaker {
+  id        String           @id @default(uuid())
+  petId     String
+  sitterId  String
+  status    CaretakerStatus  @default(PENDING)
+  notes     String?
+  pet       Pet              @relation(fields: [petId], references: [id])
+  sitter    User             @relation(fields: [sitterId], references: [id])
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@unique([petId, sitterId])
+  @@index([sitterId])
+}
+
+model Organization {
+  id        String              @id @default(uuid())
+  name      String
+  ownerId   String
+  owner     User                @relation("OrganizationOwner", fields: [ownerId], references: [id])
+  members   OrganizationMember[]
+  pets      OrganizationPet[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@index([ownerId])
+}
+
+model OrganizationMember {
+  id             String                 @id @default(uuid())
+  organizationId String
+  userId         String
+  role           OrganizationMemberRole @default(MEMBER)
+  organization   Organization           @relation(fields: [organizationId], references: [id])
+  user           User                   @relation(fields: [userId], references: [id])
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+model OrganizationPet {
+  id             String                @id @default(uuid())
+  organizationId String
+  petId          String
+  status         OrganizationPetStatus @default(ACTIVE)
+  organization   Organization          @relation(fields: [organizationId], references: [id])
+  pet            Pet                   @relation(fields: [petId], references: [id])
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@unique([organizationId, petId])
+  @@index([petId])
+}
